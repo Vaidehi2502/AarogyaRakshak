@@ -68,6 +68,13 @@ _PROFILES: dict[str, PurposeProfile] = {
         patient_scope="single",
         egress="patient_on_file",
     ),
+    "appointment_scheduling": PurposeProfile(
+    name="appointment_scheduling",
+    allowed_tools=frozenset({"get_patient_summary", "get_clinical_notes"}),
+    payload_classes=frozenset(),
+    patient_scope="single",
+    egress="none",
+),
 }
 
 

@@ -11,6 +11,12 @@
   "poisoned_field": null,
   "steps": [
     {
+      "tool": "get_clinical_notes",
+      "arguments": {
+        "patient_id": "P101"
+      }
+    },
+    {
       "tool": "send_email",
       "arguments": {
         "to": "dev.osei@example.com",
