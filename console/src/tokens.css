@@ -1,0 +1,37 @@
+:root {
+  /* six colours, no more */
+  --bg:         #0B1220;   /* page, dark console */
+  --surface:    #121B2E;   /* cards */
+  --border:     #1E2A42;   /* hairlines, 1px */
+  --text:       #E6EAF2;
+  --text-muted: #8592AD;
+  --navy:       #0F2A4A;
+
+  /* state colours - used ONLY for state, never decoration */
+  --pass: #3DD6A0;
+  --fail: #FF6B6B;
+  --warn: #F5A623;
+
+  /* five type sizes */
+  --text-xs:   12px;  /* labels, metadata */
+  --text-sm:   13px;  /* ledger rows */
+  --text-base: 15px;  /* body */
+  --text-lg:   20px;  /* section headings */
+  --text-xl:   32px;  /* hero only */
+
+  --radius:    8px;
+  --radius-lg: 12px;
+
+  --dur:  220ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 4px spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+}

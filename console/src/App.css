@@ -1,0 +1,32 @@
+.app-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-error-banner {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 10%, var(--bg));
+  border-bottom: 1px solid var(--border);
+}
+
+.app-columns {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px 1fr 320px;
+  gap: 12px;
+  padding: 16px;
+}
+
+@media (max-width: 900px) {
+  .app-columns {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(240px, auto);
+    overflow-y: auto;
+  }
+}

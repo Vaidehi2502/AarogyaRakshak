@@ -1,0 +1,27 @@
+.sever-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.sever-line {
+  fill: none;
+  stroke: var(--fail);
+  stroke-width: 1.5;
+  transition: stroke-dashoffset 300ms var(--ease);
+}
+
+.sever-half {
+  fill: none;
+  stroke: var(--fail);
+  stroke-width: 1.5;
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+.sever-half.snap {
+  transition: transform 180ms var(--ease), opacity 180ms var(--ease);
+  transform: translate(var(--dx), var(--dy));
+  opacity: 0;
+}

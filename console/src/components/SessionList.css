@@ -1,0 +1,118 @@
+.session-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.session-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  flex-shrink: 0;
+}
+
+.session-header {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.session-live-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+}
+.session-live-btn:hover {
+  color: var(--text);
+  background: var(--border);
+}
+
+.session-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pass);
+}
+.session-live-dot.paused {
+  background: var(--text-muted);
+}
+
+.session-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.session-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+
+.session-row:hover {
+  background: var(--border);
+}
+
+.session-row.selected {
+  background: var(--navy);
+  border-color: var(--navy);
+}
+
+.session-row-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.session-dot.allow {
+  background: var(--pass);
+}
+.session-dot.block {
+  background: var(--fail);
+}
+.session-dot.flag {
+  background: var(--warn);
+}
+
+.session-tool {
+  color: var(--text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-class {
+  color: var(--text-muted);
+  padding-left: 16px;
+}
+
+.session-empty {
+  color: var(--text-muted);
+  padding: var(--space-2);
+}
