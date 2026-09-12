@@ -54,6 +54,7 @@ class CheckResult:
     name: str
     status: Status
     reason: str
+    source: dict | None = None
 
 
 # --- the eight checks ---------------------------------------------------
@@ -147,6 +148,7 @@ def _check_provenance(store: ProvenanceStore, arguments: dict) -> CheckResult:
             "provenance_taint",
             Status.HARD_FAIL,
             f"parameter(s) {tainted} match content the agent previously read from untrusted free text - untrusted content cannot be obeyed",
+            source=store.locate(arguments[tainted[0]]),
         )
     return CheckResult("provenance_taint", Status.PASS, "no request parameter traces to untrusted free text")
 

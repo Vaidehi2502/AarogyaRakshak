@@ -27,10 +27,24 @@ from mcp.shared.memory import create_client_server_memory_streams
 
 from audit import AuditLog
 from ehr_server import create_ehr_server
-from evaluator import EvaluationResult, Verdict, evaluate
+from evaluator import EvaluationResult, Status, Verdict, evaluate
 from passport import Passport
 from policy import TOOL_EGRESS_PARAM
 from provenance import ProvenanceStore, label_response
+
+
+def _serialize_checks(checks: list) -> list[dict]:
+    """The evaluator's 8 CheckResults, as the console's ledger schema:
+    always all 8, numbered in evaluator order, pass/fail plus a citation
+    for whichever check (currently only provenance_taint) carries one.
+    """
+    out = []
+    for i, c in enumerate(checks, start=1):
+        row = {"n": i, "name": c.name, "passed": c.status == Status.PASS, "detail": c.reason}
+        if c.source:
+            row["source"] = c.source
+        out.append(row)
+    return out
 
 
 @dataclass
@@ -55,9 +69,12 @@ class Decision:
     pure CPU and normally negligible next to a real network hop.
     """
 
+    call_id: str
+    tool: str
     verdict: Verdict
     reasons: list[str]
     soft_checks: list[str]
+    checks: list[dict]
     t_policy_ms: float
     t_upstream_ms: float
     t_total_ms: float
@@ -78,17 +95,28 @@ class GatewaySession:
     enforce: bool = True
     audit_log: AuditLog = field(default_factory=AuditLog)
     provenance: ProvenanceStore = field(default_factory=ProvenanceStore)
+    context: dict = field(default_factory=dict, init=False)
+    _call_count: int = field(default=0, init=False)
 
     async def invoke(self, tool_name: str, arguments: dict, passport: Passport) -> dict:
         """Run one agent-issued tool call through the gateway.
 
-        Returns {"verdict", "reasons", "result", "t_policy_ms",
+        Returns {"call_id", "tool", "verdict", "reasons", "soft_checks",
+        "checks", "result", "context", "latency_ms", "t_policy_ms",
         "t_upstream_ms", "t_total_ms"}; `result` is populated for ALLOW
-        and FLAG, and is None for BLOCK.
+        and FLAG, and is None for BLOCK. `checks` is always all 8
+        evaluator.py CheckResults (empty only when enforce=False, the
+        ungated baseline path) - console-facing ledger schema, see
+        _serialize_checks. `context` is every EHR field the agent has
+        read so far this session (accumulated across calls, keyed by
+        field name), each tagged with its provenance.Label - the
+        console's "what the agent was shown" pane.
         """
         total_start = time.perf_counter()
         t_policy_ms = 0.0
         t_upstream_ms = 0.0
+        self._call_count += 1
+        call_id = f"c_{self._call_count:04d}"
 
         if self.enforce:
             on_file_contacts, contacts_upstream_ms = await self._lookup_contacts(tool_name, passport.patient_id)
@@ -109,15 +137,18 @@ class GatewaySession:
 
         result = None
         if evaluation.verdict in (Verdict.ALLOW, Verdict.FLAG):
-            result, call_upstream_ms = await self._call_ehr(tool_name, arguments)
+            result, call_upstream_ms = await self._call_ehr(tool_name, arguments, patient_id=passport.patient_id)
             t_upstream_ms += call_upstream_ms
 
         t_total_ms = (time.perf_counter() - total_start) * 1000
 
         decision = Decision(
+            call_id=call_id,
+            tool=tool_name,
             verdict=evaluation.verdict,
             reasons=evaluation.reasons,
             soft_checks=evaluation.soft_signal_checks,
+            checks=_serialize_checks(evaluation.checks),
             t_policy_ms=t_policy_ms,
             t_upstream_ms=t_upstream_ms,
             t_total_ms=t_total_ms,
@@ -125,6 +156,7 @@ class GatewaySession:
 
         self.audit_log.append(
             {
+                "call_id": decision.call_id,
                 "subject": passport.subject,
                 "purpose": passport.purpose,
                 "patient_id": passport.patient_id,
@@ -140,10 +172,15 @@ class GatewaySession:
             }
         )
         return {
+            "call_id": decision.call_id,
+            "tool": decision.tool,
             "verdict": decision.verdict.value,
             "reasons": decision.reasons,
             "soft_checks": decision.soft_checks,
+            "checks": decision.checks,
             "result": result,
+            "context": dict(self.context),
+            "latency_ms": decision.t_total_ms,
             "t_policy_ms": decision.t_policy_ms,
             "t_upstream_ms": decision.t_upstream_ms,
             "t_total_ms": decision.t_total_ms,
@@ -160,7 +197,7 @@ class GatewaySession:
             return {}, 0.0
         return {"phone": summary.get("phone"), "email": summary.get("email")}, upstream_ms
 
-    async def _call_ehr(self, tool_name: str, arguments: dict) -> tuple[dict, float]:
+    async def _call_ehr(self, tool_name: str, arguments: dict, patient_id: str | None = None) -> tuple[dict, float]:
         """Returns (payload, t_upstream_ms). Only the MCP call itself is
         timed - JSON decoding and provenance labelling happen after the
         clock stops, since they are not part of "waiting on the EHR".
@@ -171,7 +208,19 @@ class GatewaySession:
 
         payload = json.loads(call_result.content[0].text)
         labels = label_response(tool_name, payload)
-        self.provenance.record(tool_name, labels, payload)
+        resolved_patient_id = patient_id or arguments.get("patient_id")
+        self.provenance.record(tool_name, labels, payload, patient_id=resolved_patient_id)
+        if tool_name.startswith("get_"):
+            # Only EHR record reads populate "what the agent was shown" -
+            # an action tool's own response (send_sms's {status, channel,
+            # to, message}, say) is not a chart field and would clutter
+            # the console's context pane with call results, not record data.
+            for key, label in labels.items():
+                self.context[key] = {
+                    "label": label.value,
+                    "value": payload.get(key),
+                    "patient_id": resolved_patient_id,
+                }
         return payload, upstream_ms
 
 

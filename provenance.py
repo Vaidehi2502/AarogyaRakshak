@@ -88,20 +88,39 @@ def label_response(tool_name: str, result: dict) -> dict[str, Label]:
 
 
 @dataclass
+class FreeTextChunk:
+    """One piece of clinician-authored prose the agent has read, tagged
+    with where it came from so a later taint hit can cite an exact span
+    back to the console (see ProvenanceStore.locate).
+    """
+
+    text: str
+    field: str
+    patient_id: str | None = None
+
+
+@dataclass
 class ProvenanceStore:
     """Per-session accumulator of free-text chunks seen on the response path."""
 
-    free_text_chunks: list[str] = field(default_factory=list)
+    free_text_chunks: list[FreeTextChunk] = field(default_factory=list)
 
-    def record(self, tool_name: str, labels: dict[str, Label], values: dict) -> None:
+    def record(self, tool_name: str, labels: dict[str, Label], values: dict, patient_id: str | None = None) -> None:
         for key, label in labels.items():
             if label is not Label.FREE_TEXT:
                 continue
             value = values.get(key)
             if isinstance(value, str):
-                self.free_text_chunks.append(value)
+                self.free_text_chunks.append(FreeTextChunk(value, key, patient_id))
             elif isinstance(value, list):
-                self.free_text_chunks.extend(v for v in value if isinstance(v, str))
+                # One chunk per field, not per list item: a multi-note
+                # field (e.g. `notes: [...]`) is a single citation surface
+                # for the console, which displays and slices it as one
+                # space-joined string - start/end must be offsets into
+                # that same joined text, not into one item alone.
+                joined = " ".join(v for v in value if isinstance(v, str))
+                if joined:
+                    self.free_text_chunks.append(FreeTextChunk(joined, key, patient_id))
 
     def trace(self, arguments: dict) -> list[str]:
         """Names of request parameters whose identifier-like value appears
@@ -119,6 +138,22 @@ class ProvenanceStore:
         for name, value in arguments.items():
             if not isinstance(value, str) or not is_identifier_like(value):
                 continue
-            if any(value in chunk for chunk in self.free_text_chunks):
+            if any(value in chunk.text for chunk in self.free_text_chunks):
                 tainted.append(name)
         return tainted
+
+    def locate(self, value: str) -> dict | None:
+        """Where a tainted value came from, as a console citation: the
+        byte span of `value` inside the first free-text chunk that
+        contains it, plus a `cite` string like "ehr:P105/notes[57-98]".
+        Returns None if no chunk contains it (should not happen for a
+        name trace() already returned as tainted).
+        """
+        for chunk in self.free_text_chunks:
+            start = chunk.text.find(value)
+            if start == -1:
+                continue
+            end = start + len(value)
+            uri = f"ehr:{chunk.patient_id}/{chunk.field}" if chunk.patient_id else f"ehr:{chunk.field}"
+            return {"uri": uri, "field": chunk.field, "start": start, "end": end, "cite": f"{uri}[{start}-{end}]"}
+        return None
