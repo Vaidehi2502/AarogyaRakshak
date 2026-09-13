@@ -33,6 +33,9 @@ export default function SessionList({ decisions, effectiveIndex, followLive, onS
             <span className="session-row-top">
               <span className={`session-dot ${DOT_CLASS[d.verdict] ?? "flag"}`} />
               <span className="session-tool mono text-xs">{d.tool}</span>
+              <span className={`session-verdict mono text-xs ${DOT_CLASS[d.verdict] ?? "flag"}`}>
+                {d.verdict}
+              </span>
             </span>
             <span className="session-class text-xs">{d.class}</span>
           </button>

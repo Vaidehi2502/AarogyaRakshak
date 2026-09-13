@@ -15,7 +15,17 @@
   letter-spacing: 0.08em;
   color: var(--text-muted);
   text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.context-legend {
+  color: var(--text-muted);
   margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.context-legend .context-tag {
+  font-weight: 500;
 }
 
 .context-field {

@@ -105,6 +105,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+}
+
+.session-verdict {
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.session-verdict.allow {
+  color: var(--pass);
+}
+.session-verdict.block {
+  color: var(--fail);
+}
+.session-verdict.flag {
+  color: var(--warn);
 }
 
 .session-class {

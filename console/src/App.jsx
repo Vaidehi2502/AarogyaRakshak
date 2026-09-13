@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import "./App.css";
 import { useDecisionFeed } from "./hooks/useDecisionFeed";
+import Header from "./components/Header";
 import SessionList from "./components/SessionList";
 import CheckLedger from "./components/CheckLedger";
 import ContextPane from "./components/ContextPane";
@@ -38,6 +39,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <Header decisions={decisions} />
       {status === "error" && (
         <div className="app-error-banner text-xs mono">feed disconnected - retrying every 2s</div>
       )}

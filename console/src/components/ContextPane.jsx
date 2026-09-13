@@ -38,6 +38,10 @@ export default function ContextPane({ decision }) {
   return (
     <div className="context-card">
       <div className="context-header">Context provenance</div>
+      <div className="context-legend text-xs mono">
+        <span className="context-tag structured">STRUCTURED/TRUSTED</span> verified &middot;{" "}
+        <span className="context-tag untrusted">UNTRUSTED</span> free text, not verified
+      </div>
 
       <div className="context-field">
         <span className="context-field-key mono text-xs">patient_id</span>
