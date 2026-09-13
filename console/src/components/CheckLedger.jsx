@@ -45,22 +45,23 @@ export default function CheckLedger({ decision, loading }) {
 
   const checks = decision.checks ?? [];
   const failingCount = checks.filter((c) => !c.passed).length;
+  const hasFailure = failingCount > 0;
 
   return (
-    <div className="ledger-card">
+    <div className="ledger-card" data-verdict={decision.verdict}>
       <div className="ledger-header">Check ledger</div>
       <div className="ledger-rows" key={decision._seq ?? decision.call_id}>
         {checks.map((c, i) => (
           <div
             key={c.n}
-            className="ledger-row"
+            className={`ledger-row${hasFailure && c.passed ? " ledger-row-dim" : ""}`}
             style={{ "--row-i": i }}
             data-failing-check={!c.passed && c.source ? "true" : undefined}
           >
             {c.passed ? <PassMark /> : <FailMark />}
             <span className="ledger-n mono text-xs">{c.n}</span>
             <span className="ledger-name mono text-sm">{c.name}</span>
-            <span className="ledger-detail text-sm">
+            <span className={`ledger-detail text-sm${!c.passed ? " ledger-detail-failing" : ""}`}>
               {c.detail}
               {c.source && <span className="ledger-cite mono text-xs">{c.source.cite}</span>}
             </span>
@@ -68,8 +69,8 @@ export default function CheckLedger({ decision, loading }) {
         ))}
       </div>
       <div className="ledger-verdict" data-verdict={decision.verdict}>
-        <span className="ledger-verdict-word text-sm">{decision.verdict}</span>
-        <span className="ledger-verdict-meta text-xs mono">
+        <span className="ledger-verdict-word">{decision.verdict}</span>
+        <span className="ledger-verdict-meta text-sm mono">
           {failingCount} failing &middot; {formatMs(decision.latency_ms)}
         </span>
       </div>

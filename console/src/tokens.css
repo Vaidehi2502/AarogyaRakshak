@@ -17,7 +17,7 @@
   --text-sm:   13px;  /* ledger rows */
   --text-base: 15px;  /* body */
   --text-lg:   20px;  /* section headings */
-  --text-xl:   32px;  /* hero only */
+  --text-xl:   56px;  /* verdict only - the conclusion, not the evidence */
 
   --radius:    8px;
   --radius-lg: 12px;
